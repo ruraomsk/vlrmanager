@@ -107,9 +107,9 @@ public class VLRDataTableManager {
                     type = 99;
             }
             rec.setValue("type", type);
-            rec.setValue("send", (mask & 0x80) > 0);
-            rec.setValue("arch", (mask & 0x40) > 0);
-            rec.setValue("eprom", (mask & 0x20) > 0);
+            rec.setValue("send", (mask & 0x80) != 0);
+            rec.setValue("arch", (mask & 0x40) != 0);
+            rec.setValue("eprom", (mask & 0x20) != 0);
 
         }
         return result;
