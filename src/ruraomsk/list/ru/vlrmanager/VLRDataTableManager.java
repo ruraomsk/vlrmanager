@@ -10,13 +10,15 @@ import com.tibbo.aggregate.common.datatable.*;
 import static com.tibbo.aggregate.common.datatable.FieldFormat.*;
 import com.tibbo.aggregate.common.datatable.validator.LimitsValidator;
 import com.tibbo.aggregate.common.datatable.validator.ValidatorHelper;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
@@ -168,7 +170,7 @@ public class VLRDataTableManager {
                         break;
                     default:
                         type = 99;
-                        value=0;
+                        value = 0;
                 }
                 rec.setValue("type", type);
                 rec.setValue("value", value.toString());
@@ -177,19 +179,51 @@ public class VLRDataTableManager {
         }
         return result;
     }
-    static public String toXML(DataTable table){
+
+    static public String toXML(DataTable table) {
         try {
             return EncodingUtils.encodeToXML(table);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException ex) {
-            System.err.println("toXML "+ex.getMessage());
+            System.err.println("toXML " + ex.getMessage());
             return null;
         }
     }
-    static public DataTable fromXML(String xml){
+
+    static public DataTable fromXML(String xml) {
         try {
             return EncodingUtils.decodeFromXML(xml);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException | IllegalArgumentException | SAXException ex) {
-            System.err.println("fromXML "+ex.getMessage());
+            System.err.println("fromXML " + ex.getMessage());
+            return null;
+        }
+    }
+
+    static public byte[] loadZipFile(String zipFile, boolean flag) {
+        try (ZipInputStream zipfile = new ZipInputStream(new FileInputStream(zipFile))) {
+            ZipEntry zipentry;
+            while ((zipentry = zipfile.getNextEntry()) != null) {
+                byte[] buffer = new byte[(int) (zipentry.getSize() & 0xffff)];
+                int pos = 0;
+                while (pos < buffer.length) {
+                    int len = buffer.length - pos;
+                    len = Math.min(1000, len);
+                    len = zipfile.read(buffer, pos, len);
+                    pos += len;
+                }
+                if (zipentry.getName().equalsIgnoreCase("params.inf")&&flag) {
+                    return buffer;
+                }
+                if (zipentry.getName().equalsIgnoreCase("const.txt")&&!flag) {
+                    return buffer;
+//                                        System.out.println(fs.getConstats().toString());
+                }
+            }
+            return null;
+        } catch (FileNotFoundException ex) {
+            System.err.println("Файл не найден " + zipFile);
+            return null;
+        } catch (IOException ex) {
+            System.err.println("Ошибка файла " + zipFile + " " + ex.getMessage());
             return null;
         }
     }

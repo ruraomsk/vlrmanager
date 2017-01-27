@@ -32,10 +32,10 @@ public class testXML {
         VLRXMLManager vlrbase=new VLRXMLManager(param, true);
         DataTable table=VLRDataTableManager.emptyTable();
         String xml=EncodingUtils.encodeToXML(table);
-        vlrbase.putXML(1, 1, xml);
-        vlrbase.putXML(1, 2, xml);
-        vlrbase.putXML(1, 3, xml);
-        vlrbase.putXML(1, 1, xml);
+        vlrbase.putXML("1", 1, xml);
+        vlrbase.putXML("1", 2, xml);
+        vlrbase.putXML("1", 3, xml);
+        vlrbase.putXML("1", 1, xml);
         
     }
     
