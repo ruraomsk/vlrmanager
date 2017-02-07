@@ -191,6 +191,7 @@ public class VLRDataTableManager {
 
     static public DataTable fromXML(String xml) {
         try {
+            if(xml==null) return new DataTable(TableFormat.EMPTY_FORMAT);
             return EncodingUtils.decodeFromXML(xml);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException | IllegalArgumentException | SAXException ex) {
             System.err.println("fromXML " + ex.getMessage());

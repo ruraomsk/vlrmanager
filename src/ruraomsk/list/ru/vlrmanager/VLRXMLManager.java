@@ -104,6 +104,7 @@ public class VLRXMLManager {
         try {
             String rez = "SELECT xml FROM " + param.myDB + " WHERE  idvlr='" + idvlr.toString() + "' and idfile='" + idfile.toString() + "';";
             ResultSet rs = stmt.executeQuery(rez);
+            if(rs==null) return null;
             while (rs.next()) {
                 return rs.getString("xml");
             }
