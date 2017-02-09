@@ -5,6 +5,7 @@
  */
 package ruraomsk.list.ru.vlrmanager;
 
+import com.tibbo.aggregate.common.Log;
 import com.tibbo.aggregate.common.context.ContextException;
 import com.tibbo.aggregate.common.datatable.*;
 import static com.tibbo.aggregate.common.datatable.FieldFormat.*;
@@ -76,7 +77,7 @@ public class VLRDataTableManager {
         try {
             str = new String(buffer, "Cp1251");
         } catch (UnsupportedEncodingException ex) {
-            System.err.println("Ошибка loadVariables " + ex.getMessage());
+            Log.CORE.info("Ошибка loadVariables " + ex.getMessage());
         }
         StringTokenizer st = new StringTokenizer(str, "\t\n\r");
         while (st.hasMoreElements()) {
@@ -125,7 +126,7 @@ public class VLRDataTableManager {
             str = new String(buffer, "Cp1251");
 
         } catch (UnsupportedEncodingException ex) {
-            System.err.println("Ошибка loadConstants " + ex.getMessage());
+            Log.CORE.info("Ошибка loadConstants " + ex.getMessage());
         }
         StringTokenizer st = new StringTokenizer(str, "\t\n\r");
         for (int i = 0; i < 7; i++) {
@@ -184,7 +185,7 @@ public class VLRDataTableManager {
         try {
             return EncodingUtils.encodeToXML(table);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException ex) {
-            System.err.println("toXML " + ex.getMessage());
+            Log.CORE.info("toXML " + ex.getMessage());
             return null;
         }
     }
@@ -194,7 +195,7 @@ public class VLRDataTableManager {
             if(xml==null) return new DataTable(TableFormat.EMPTY_FORMAT);
             return EncodingUtils.decodeFromXML(xml);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException | IllegalArgumentException | SAXException ex) {
-            System.err.println("fromXML " + ex.getMessage());
+            Log.CORE.info("fromXML " + ex.getMessage());
             return null;
         }
     }
@@ -221,10 +222,10 @@ public class VLRDataTableManager {
             }
             return null;
         } catch (FileNotFoundException ex) {
-            System.err.println("Файл не найден " + zipFile);
+            Log.CORE.info("Файл не найден " + zipFile);
             return null;
         } catch (IOException ex) {
-            System.err.println("Ошибка файла " + zipFile + " " + ex.getMessage());
+            Log.CORE.info("Ошибка файла " + zipFile + " " + ex.getMessage());
             return null;
         }
     }

@@ -4,6 +4,7 @@
  */
 package ruraomsk.list.ru.vlrmanager;
 
+import com.tibbo.aggregate.common.Log;
 import com.tibbo.aggregate.common.datatable.DataRecord;
 import com.tibbo.aggregate.common.datatable.DataTable;
 import com.tibbo.aggregate.common.datatable.FieldFormat;
@@ -63,7 +64,7 @@ public class VLRXMLManager {
             stmt.executeUpdate("drop table if exists " + param.myDB + ";");
             stmt.executeUpdate("create table " + param.myDB + " (idvlr text,idfile bigint,xml text);");
         } catch (ClassNotFoundException | SQLException ex) {
-            System.err.println("SQL create " + ex.getMessage());
+            Log.CORE.info("SQL create " + ex.getMessage());
             return false;
         }
         return true;
@@ -76,7 +77,7 @@ public class VLRXMLManager {
             con = DriverManager.getConnection(param.url, param.user, param.password);
             stmt = con.createStatement();
         } catch (ClassNotFoundException | SQLException ex) {
-            System.err.println("SQL open " + ex.getMessage());
+            Log.CORE.info("SQL open " + ex.getMessage());
             return false;
         }
         return true;
@@ -110,7 +111,7 @@ public class VLRXMLManager {
             }
             return null;
         } catch (SQLException ex) {
-            System.err.println("getXML " + ex.getMessage());
+            Log.CORE.info("getXML " + ex.getMessage());
             return null;
         }
     }
@@ -118,7 +119,6 @@ public class VLRXMLManager {
     public boolean putXML(String idvlr, Integer idfile, String xml) {
         try {
             String rez = "SELECT xml FROM " + param.myDB + " WHERE  idvlr='" + idvlr+ "' and idfile='" + idfile.toString() + "';";
-//                System.err.println(rez);
             ResultSet rs = stmt.executeQuery(rez);
             PreparedStatement preparedStatement = con.prepareStatement("begin;");
 
@@ -126,7 +126,6 @@ public class VLRXMLManager {
                 preparedStatement = con.prepareStatement("UPDATE " + param.myDB + " SET xml=? WHERE idvlr='" + idvlr
                         + "' and idfile='" + idfile.toString() + "';");
                 preparedStatement.setString(1, xml);
-//                System.err.println(preparedStatement.toString());
                 preparedStatement.executeUpdate();
                 preparedStatement = con.prepareStatement("commit;");
                 return true;
@@ -140,7 +139,7 @@ public class VLRXMLManager {
 
         } catch (SQLException ex) {
             try {
-                System.err.println("putXML " + ex.getMessage());
+                Log.CORE.info("putXML " + ex.getMessage());
                 con.prepareStatement("rollback;");
             } catch (SQLException ex1) {
             }
@@ -164,7 +163,7 @@ public class VLRXMLManager {
             return result;
 
         } catch (SQLException ex) {
-            System.err.println("Ошибка загрузки из БД vlr " + ex.getMessage());
+            Log.CORE.info("Ошибка загрузки из БД vlr " + ex.getMessage());
             return null;
         }
     }
@@ -178,7 +177,7 @@ public class VLRXMLManager {
             }
             return true;
         } catch (SQLException ex) {
-            System.err.println("Ошибка загрузки в БД vlr " + ex.getMessage());
+            Log.CORE.info("Ошибка загрузки в БД vlr " + ex.getMessage());
             return false;
         }
     }
