@@ -64,7 +64,7 @@ public class VLRXMLManager {
             stmt.executeUpdate("drop table if exists " + param.myDB + ";");
             stmt.executeUpdate("create table " + param.myDB + " (idvlr text,idfile bigint,xml text);");
         } catch (ClassNotFoundException | SQLException ex) {
-            Log.CORE.info("SQL create " + ex.getMessage());
+            Log.CORE.error("SQL create " + ex.getMessage());
             return false;
         }
         return true;
@@ -77,7 +77,7 @@ public class VLRXMLManager {
             con = DriverManager.getConnection(param.url, param.user, param.password);
             stmt = con.createStatement();
         } catch (ClassNotFoundException | SQLException ex) {
-            Log.CORE.info("SQL open " + ex.getMessage());
+            Log.CORE.error("SQL open " + ex.getMessage());
             return false;
         }
         return true;
@@ -94,6 +94,7 @@ public class VLRXMLManager {
     }
 
     /**
+     * Считывает из БД XML с описанием переменной
      *
      * @param idvlr - идентификатор схемы ВЛР
      * @param idfile - номер данных 1 - CПО переменные 2- ППО переменные 3-
@@ -105,20 +106,30 @@ public class VLRXMLManager {
         try {
             String rez = "SELECT xml FROM " + param.myDB + " WHERE  idvlr='" + idvlr.toString() + "' and idfile='" + idfile.toString() + "';";
             ResultSet rs = stmt.executeQuery(rez);
-            if(rs==null) return null;
+            if (rs == null) {
+                return null;
+            }
             while (rs.next()) {
                 return rs.getString("xml");
             }
             return null;
         } catch (SQLException ex) {
-            Log.CORE.info("getXML " + ex.getMessage());
+            Log.CORE.error("getXML " + ex.getMessage());
             return null;
         }
     }
 
+    /**
+     * Записывает в базу данных схему XML описания переменных
+     *
+     * @param idvlr
+     * @param idfile
+     * @param xml
+     * @return
+     */
     public boolean putXML(String idvlr, Integer idfile, String xml) {
         try {
-            String rez = "SELECT xml FROM " + param.myDB + " WHERE  idvlr='" + idvlr+ "' and idfile='" + idfile.toString() + "';";
+            String rez = "SELECT xml FROM " + param.myDB + " WHERE  idvlr='" + idvlr + "' and idfile='" + idfile.toString() + "';";
             ResultSet rs = stmt.executeQuery(rez);
             PreparedStatement preparedStatement = con.prepareStatement("begin;");
 
@@ -139,7 +150,7 @@ public class VLRXMLManager {
 
         } catch (SQLException ex) {
             try {
-                Log.CORE.info("putXML " + ex.getMessage());
+                Log.CORE.error("putXML " + ex.getMessage());
                 con.prepareStatement("rollback;");
             } catch (SQLException ex1) {
             }
@@ -147,6 +158,13 @@ public class VLRXMLManager {
         }
     }
 
+    /**
+     * Возвращает в виде таблицы всю главную таблицу описания перемнных и
+     * констант
+     *
+     * @param resFrm формат результирующей таблицы
+     * @return
+     */
     public DataTable toTable(TableFormat resFrm) {
         try {
             DataTable result = new DataTable(resFrm);
@@ -163,11 +181,30 @@ public class VLRXMLManager {
             return result;
 
         } catch (SQLException ex) {
-            Log.CORE.info("Ошибка загрузки из БД vlr " + ex.getMessage());
+            Log.CORE.error("Ошибка загрузки из БД vlr " + ex.getMessage());
             return null;
         }
     }
 
+    /**
+     * возвращает пустую таблицу описания всех переменных
+     *
+     * @return
+     */
+    static public DataTable emptyTable() {
+        TableFormat VFT_Table = new TableFormat();
+        VFT_Table.addField(FieldFormat.create("<idvlr><S><D=Идентификатор ВЛР>"));
+        VFT_Table.addField(FieldFormat.create("<idfile><I><D=Номер таблицы>"));
+        VFT_Table.addField(FieldFormat.create("<variables><T><D=Таблица перемненных>"));
+        return new DataTable(VFT_Table);
+    }
+
+    /**
+     * Записывает в БД всю таблицу описания всех переменных
+     *
+     * @param table
+     * @return
+     */
     public boolean toDB(DataTable table) {
         try {
             stmt.executeUpdate("drop table if exists " + param.myDB + ";");
@@ -177,7 +214,7 @@ public class VLRXMLManager {
             }
             return true;
         } catch (SQLException ex) {
-            Log.CORE.info("Ошибка загрузки в БД vlr " + ex.getMessage());
+            Log.CORE.error("Ошибка загрузки в БД vlr " + ex.getMessage());
             return false;
         }
     }

@@ -9,7 +9,6 @@ import com.tibbo.aggregate.common.Log;
 import com.tibbo.aggregate.common.context.ContextException;
 import com.tibbo.aggregate.common.datatable.*;
 import static com.tibbo.aggregate.common.datatable.FieldFormat.*;
-import com.tibbo.aggregate.common.datatable.validator.LimitsValidator;
 import com.tibbo.aggregate.common.datatable.validator.ValidatorHelper;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,6 +29,11 @@ import org.xml.sax.SAXException;
  */
 public class VLRDataTableManager {
 
+    /**
+     * Возвращает пустую таблицу описания переменных и констант
+     *
+     * @return
+     */
     static public final DataTable emptyTable() {
         TableFormat VFT_Table = new TableFormat();
 
@@ -42,8 +46,6 @@ public class VLRDataTableManager {
         VFT_Table.addField(ff);
 
         ff = FieldFormat.create("<description><S><D=Описание>");
-        ff.getValidators().add(new LimitsValidator(1, 600));
-        ff.getValidators().add(ValidatorHelper.DESCRIPTION_SYNTAX_VALIDATOR);
         VFT_Table.addField(ff);
 
         ff = FieldFormat.create("<type><I><D=Тип переменной>");
@@ -71,15 +73,27 @@ public class VLRDataTableManager {
         return types;
     }
 
+    /**
+     * Загружает переменные
+     *
+     * @param buffer
+     * @return
+     */
     public static DataTable loadVariables(byte[] buffer) {
         DataTable result = emptyTable();
         String str = null;
         try {
             str = new String(buffer, "Cp1251");
         } catch (UnsupportedEncodingException ex) {
-            Log.CORE.info("Ошибка loadVariables " + ex.getMessage());
+            Log.CORE.error("Ошибка loadVariables " + ex.getMessage());
+            return null;
         }
         StringTokenizer st = new StringTokenizer(str, "\t\n\r");
+        if(str.substring(0, 1).equals("№")){
+            for (int i = 0; i < 5; i++) {
+                st.nextToken();
+            }
+        }
         while (st.hasMoreElements()) {
             Integer id = Integer.parseInt(st.nextToken());
             String name = st.nextToken();
@@ -118,15 +132,22 @@ public class VLRDataTableManager {
         return result;
     }
 
+    /**
+     * Загружает в таблицу константы ПЗУ
+     *
+     * @param buffer
+     * @return
+     */
     public static DataTable loadConstants(byte[] buffer) {
         DataTable result = emptyTable();
         String str = null;
         Integer id = 0;
         try {
             str = new String(buffer, "Cp1251");
-
+            
         } catch (UnsupportedEncodingException ex) {
-            Log.CORE.info("Ошибка loadConstants " + ex.getMessage());
+            Log.CORE.error("Ошибка loadConstants " + ex.getMessage());
+            return null;
         }
         StringTokenizer st = new StringTokenizer(str, "\t\n\r");
         for (int i = 0; i < 7; i++) {
@@ -148,8 +169,6 @@ public class VLRDataTableManager {
             s = st.nextToken();
             s = s.substring(0, s.indexOf(" "));
             Integer block = Integer.parseInt(s);
-//            System.out.println(name+"\t["+eeprom+"]");
-//            st.nextToken();
             if ("(ПЗУ)".equals(eeprom)) {
 
                 DataRecord rec = result.addRecord();
@@ -169,6 +188,10 @@ public class VLRDataTableManager {
                         type = 0;
                         value = Integer.parseInt(svalue) == 1;
                         break;
+                    case "Байт.":
+                        type=4;
+                        value=(byte)Integer.parseInt(svalue)&0xff;
+                        break;
                     default:
                         type = 99;
                         value = 0;
@@ -181,25 +204,46 @@ public class VLRDataTableManager {
         return result;
     }
 
+    /**
+     * Конвертирует в XML DataTable
+     *
+     * @param table
+     * @return
+     */
     static public String toXML(DataTable table) {
         try {
             return EncodingUtils.encodeToXML(table);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException ex) {
-            Log.CORE.info("toXML " + ex.getMessage());
+            Log.CORE.error("toXML " + ex.getMessage());
             return null;
         }
     }
 
+    /**
+     * Создает таблицу из XML
+     *
+     * @param xml
+     * @return
+     */
     static public DataTable fromXML(String xml) {
         try {
-            if(xml==null) return new DataTable(TableFormat.EMPTY_FORMAT);
+            if (xml == null) {
+                return new DataTable(TableFormat.EMPTY_FORMAT);
+            }
             return EncodingUtils.decodeFromXML(xml);
         } catch (ParserConfigurationException | IOException | ContextException | DOMException | IllegalArgumentException | SAXException ex) {
-            Log.CORE.info("fromXML " + ex.getMessage());
+            Log.CORE.error("fromXML " + ex.getMessage());
             return null;
         }
     }
 
+    /**
+     * Загружает в строку zip файл dataXXX
+     *
+     * @param zipFile
+     * @param flag True переменные false константы ПЗУ
+     * @return null если были ошибки
+     */
     static public byte[] loadZipFile(String zipFile, boolean flag) {
         try (ZipInputStream zipfile = new ZipInputStream(new FileInputStream(zipFile))) {
             ZipEntry zipentry;
@@ -212,20 +256,19 @@ public class VLRDataTableManager {
                     len = zipfile.read(buffer, pos, len);
                     pos += len;
                 }
-                if (zipentry.getName().equalsIgnoreCase("params.inf")&&flag) {
+                if (zipentry.getName().equalsIgnoreCase("params.inf") && flag) {
                     return buffer;
                 }
-                if (zipentry.getName().equalsIgnoreCase("const.txt")&&!flag) {
+                if (zipentry.getName().equalsIgnoreCase("const.txt") && !flag) {
                     return buffer;
-//                                        System.out.println(fs.getConstats().toString());
                 }
             }
             return null;
         } catch (FileNotFoundException ex) {
-            Log.CORE.info("Файл не найден " + zipFile);
+            Log.CORE.error("Файл не найден " + zipFile);
             return null;
         } catch (IOException ex) {
-            Log.CORE.info("Ошибка файла " + zipFile + " " + ex.getMessage());
+            Log.CORE.error("Ошибка файла " + zipFile + " " + ex.getMessage());
             return null;
         }
     }
